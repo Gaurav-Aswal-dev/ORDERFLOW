@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Orderflow | Matching Engine</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Orderflow home">
+        <span class="brand-mark">O</span>
+        <span>orderflow<span class="brand-dot">.</span><small>MATCHING ENGINE</small></span>
+      </a>
+      <div class="side-label">WORKSPACE</div>
+      <a class="nav-item active" href="#dashboard"><span>▦</span> Overview</a>
+      <a class="nav-item" href="#order-entry"><span>＋</span> Place an order</a>
+      <a class="nav-item" href="#market"><span>↗</span> Market book</a>
+      <a class="nav-item" href="/os-lab"><span>⚙</span> OS Lab</a>
+      <a class="nav-item" href="/continuous-bidding"><span>⇄</span> Continuous Bidding</a>
+      <a class="nav-item" href="/auction-bidding"><span>♜</span> Auction Bidding</a>
+      <div class="sidebar-bottom">
+        <div class="status-card">
+          <span class="status-light"></span>
+          <div><strong>Engine status</strong><small id="connection-label">Connecting…</small></div>
+        </div>
+        <div class="sidebar-note">EDUCATIONAL SANDBOX<br>Simulated orders · No real money</div>
+      </div>
+    </aside>
+
+    <main class="main" id="dashboard">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">TRADING SYSTEMS / OVERVIEW</div>
+          <h1>Orderflow dashboard</h1>
+          <p class="subtitle">A live window into order matching engine.</p>
+        </div>
+        <div class="top-actions">
+          <span class="pill"><span class="status-light"></span> LOCAL ENVIRONMENT</span>
+          <button class="icon-button" id="refresh-button" title="Refresh dashboard" aria-label="Refresh dashboard">↻</button>
+        </div>
+      </header>
+
+      <section class="metric-grid" aria-label="Engine statistics">
+        <article class="metric-card"><div class="metric-top"><span>Total orders</span><span class="metric-icon blue">↕</span></div><strong id="stat-orders">—</strong><small>Orders persisted</small></article>
+        <article class="metric-card"><div class="metric-top"><span>Open orders</span><span class="metric-icon violet">◷</span></div><strong id="stat-open">—</strong><small>Waiting in the book</small></article>
+        <article class="metric-card"><div class="metric-top"><span>Completed trades</span><span class="metric-icon green">↗</span></div><strong id="stat-trades">—</strong><small>Executed matches</small></article>
+        <article class="metric-card"><div class="metric-top"><span>Units traded</span><span class="metric-icon amber">◇</span></div><strong id="stat-volume">—</strong><small>Total matched quantity</small></article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel order-panel" id="order-entry">
+          <div class="panel-heading"><div><div class="eyebrow">NEW ORDER</div><h2>Place an order</h2></div><span class="panel-symbol">⌁</span></div>
+          <div class="side-switch" role="group" aria-label="Order side">
+            <button type="button" class="side-button buy selected" data-side="BUY">Buy order</button>
+            <button type="button" class="side-button sell" data-side="SELL">Sell order</button>
+          </div>
+          <form id="order-form">
+            <input type="hidden" id="side-input" value="BUY">
+            <label for="price-input">Limit price <span>PRICE / UNIT</span></label>
+            <div class="input-wrap"><span class="input-prefix">₹</span><input id="price-input" type="number" min="0.01" max="1000000000" step="0.01" value="100" required></div>
+            <label for="quantity-input">Quantity <span>WHOLE UNITS</span></label>
+            <div class="input-wrap"><span class="input-prefix">#</span><input id="quantity-input" type="number" min="1" max="1000000" step="1" value="5" required></div>
+            <div class="order-hint"><span class="hint-dot"></span><span id="order-hint-text">A buy matches a sell at or below your limit price.</span></div>
+            <button class="submit-button buy-submit" id="submit-button" type="submit"><span>Submit buy order</span><span>↗</span></button>
+            <div id="order-feedback" class="feedback" role="status" aria-live="polite"></div>
+          </form>
+          <div class="panel-footnote"><span>ⓘ</span> Orders are simulated and stored locally in SQLite.</div>
+        </article>
+
+        <article class="panel book-panel" id="market">
+          <div class="panel-heading"><div><div class="eyebrow">LIVE MARKET</div><h2>Order book</h2></div><span class="live-tag"><span class="status-light"></span> LIVE</span></div>
+          <div class="book-legend"><span>PRICE (₹)</span><span>QUANTITY</span><span>ORDERS</span></div>
+          <div class="book-columns">
+            <div class="book-side">
+              <div class="book-side-title sell-title"><span class="legend-dot sell-dot"></span> SELL ORDERS <span id="sell-count" class="count-pill">0</span></div>
+              <div id="sell-book" class="book-rows"><div class="empty-state">No resting sell orders</div></div>
+            </div>
+            <div class="book-side">
+              <div class="book-side-title buy-title"><span class="legend-dot buy-dot"></span> BUY ORDERS <span id="buy-count" class="count-pill">0</span></div>
+              <div id="buy-book" class="book-rows"><div class="empty-state">No resting buy orders</div></div>
+            </div>
+          </div>
+          <div class="book-footer"><span>Best bid <strong id="best-bid">—</strong></span><span>Best ask <strong id="best-ask">—</strong></span><span>Spread <strong id="spread">—</strong></span></div>
+        </article>
+      </section>
+
+      <section class="panel trades-panel">
+        <div class="panel-heading"><div><div class="eyebrow">EXECUTION LOG</div><h2>Recent trades</h2></div><span class="table-caption">Latest 10 executions</span></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>TRADE ID</th><th>BUY ORDER</th><th>SELL ORDER</th><th>EXECUTION PRICE</th><th>QUANTITY</th><th>STATUS</th></tr></thead>
+            <tbody id="trades-body"><tr><td colspan="6" class="empty-table">No trades yet. Place crossing orders to see executions.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="feature-grid">
+        <article class="panel feature-panel"><div class="panel-heading"><div><div class="eyebrow">MARKET DATA</div><h2>File replay</h2></div><span class="panel-symbol">⇧</span></div>
+          <p class="feature-copy">Upload CSV, Excel (.xlsx), or JSON orders with <code>symbol, side, price, quantity</code> columns/fields.</p>
+          <form id="csv-form" class="feature-form"><input id="csv-file" type="file" accept=".csv,.xlsx,.json,text/csv,application/json" required><button class="mini-button" type="submit">Validate &amp; replay</button></form><div id="csv-result" class="lab-result">Ready for CSV, Excel, or JSON.</div>
+        </article>
+        <article class="panel feature-panel"><div class="panel-heading"><div><div class="eyebrow">MULTI-INSTRUMENT</div><h2>Stock books</h2></div><span class="panel-symbol">▤</span></div>
+          <div class="feature-form stock-form"><input id="stock-symbol" maxlength="12" value="RELIANCE" aria-label="Stock symbol" list="stock-master-options" placeholder="Search symbol/company"><datalist id="stock-master-options"></datalist><select id="stock-side"><option>BUY</option><option>SELL</option></select><input id="stock-price" type="number" min="0.01" step="0.01" value="100" aria-label="Price"><input id="stock-qty" type="number" min="1" value="10" aria-label="Quantity"><button class="mini-button" id="stock-submit">Place</button></div>
+          <form id="master-form" class="feature-form"><input id="master-file" type="file" accept=".csv,text/csv" required><button class="mini-button" type="submit">Import NSE master</button></form><div id="master-result" class="lab-result">Import NSE securities CSV to load the full list.</div><div class="lab-result" id="stock-result">Only listed symbols are accepted. Search by symbol/company; import the NSE stock master CSV to load the full catalog.</div><div id="stock-list" class="stock-chips">No symbols yet</div><div id="stock-book-view" class="lab-result">Place an order to inspect that symbol’s book.</div>
+        </article>
+      </section>
+      <section class="panel conditional-panel" id="conditional-orders">
+        <div class="panel-heading"><div><div class="eyebrow">RISK CONTROLS</div><h2>Stop-Loss &amp; Take-Profit</h2></div><span class="panel-symbol">⌁</span></div>
+        <p class="feature-copy">Create conditional orders for a company. They trigger from its latest actual executed trade price, then submit a normal limit order.</p>
+        <form id="conditional-form" class="feature-form conditional-form">
+          <input id="conditional-symbol" maxlength="12" value="RELIANCE" aria-label="Stock symbol" list="stock-master-options" placeholder="Symbol" required>
+          <select id="conditional-kind" aria-label="Condition type"><option value="STOP_LOSS">Stop-Loss</option><option value="TAKE_PROFIT">Take-Profit</option></select>
+          <select id="conditional-side" aria-label="Order side"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+          <input id="conditional-price" type="number" min="0.01" step="0.01" value="95" aria-label="Trigger price" required>
+          <input id="conditional-qty" type="number" min="1" step="1" value="10" aria-label="Quantity" required>
+          <button class="mini-button" type="submit">Create condition</button>
+        </form>
+        <div id="conditional-feedback" class="lab-result">Choose a symbol and create a condition.</div>
+        <div class="conditional-list-head"><strong>Saved conditions</strong><button class="mini-button" type="button" id="conditional-refresh">Refresh</button></div>
+        <div class="table-scroll"><table><thead><tr><th>SYMBOL</th><th>TYPE</th><th>SIDE</th><th>TRIGGER</th><th>QTY</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="conditional-body"><tr><td colspan="7" class="empty-table">No conditional orders loaded.</td></tr></tbody></table></div>
+      </section>
+      <footer class="footer"><span>ORDERFLOW <b>•</b> PYTHON + SQLITE</span><span id="last-updated">Waiting for first update</span></footer>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

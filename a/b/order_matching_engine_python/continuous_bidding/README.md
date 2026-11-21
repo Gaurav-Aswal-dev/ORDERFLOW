@@ -1,0 +1,2 @@
+# Continuous Bidding
+Independent multi-symbol limit-order book. BUY orders match eligible SELL orders at the resting ask; SELL orders match eligible BUY orders at the resting bid. Resting orders use price then timestamp/order ID priority. Supports partial fills and canceling residual open quantity. API is mounted by `dashboard.app` under `/api/continuous`; SQLite is `database/continuous_bidding.db`.

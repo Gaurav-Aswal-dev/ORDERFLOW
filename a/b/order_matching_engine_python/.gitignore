@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Generated SQLite data
+database/*.db
+database/*.db-wal
+database/*.db-shm
+database/stock_data/
+*.db
+*.db-wal
+*.db-shm
+
+# Local environment
+.env
